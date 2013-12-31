@@ -16,10 +16,25 @@ class TVG(object):
             self.RRIntervals.extend([3, 2, 1])
         return 1
 
+
     def generate_poisson_random_data(self, Plambda, NumberOfData):
         import numpy as np
 
         self.RRIntervals = np.random.poisson(Plambda, NumberOfData)
+        return 1
+ 
+    def import_amosov_data(self, fileName):
+        import xlrd
+
+        book = xlrd.open_workbook(fileName)
+        sheet = book.sheet_by_name('RR_1')
+
+        # colums = (2, 5, 8)
+        # for rr_row in colums:
+        self.RRIntervals.extend(sheet.col_values(2)[5:])
+
+        self.RRIntervals = map(int, self.RRIntervals)
+
         return 1
 
     def make_network_with_static_probability(self, probability):
@@ -30,21 +45,30 @@ class TVG(object):
         EdgeList = []
         NumberOfIntervals = len(self.RRIntervals)
         for i in xrange(NumberOfIntervals):
+            delta = self.RRIntervals[i]
             j = i + 1
-            flag = True
-            while flag and j < NumberOfIntervals:
-                flag = False
+            TunnelingFlag = False
+            while (j < NumberOfIntervals):
                 if self.RRIntervals[i] > self.RRIntervals[j]:
-                    edge = (i, j)
+                    if 0 < (self.RRIntervals[i] - self.RRIntervals[j]) <= delta:
+                        delta = self.RRIntervals[i] - self.RRIntervals[j]
+                        edge = (i,j)
+                        EdgeList.append(edge)
+                else:
+                    edge = (i,j)
                     EdgeList.append(edge)
-                    flag = True
-                elif random.random() <= probability:
-                    edge = (i, j)
-                    EdgeList.append(edge)
-                    flag = True
+                    if not TunnelingFlag and (random.random() <= probability):
+                        TunnelingFlag = True
+                    else:
+                        TunnelingFlag = False
+                        break
+
                 j = j + 1
+
         self.graph = nx.from_edgelist(EdgeList)
         return 1
+
+
 
     def calculate_average_degree(self):
         NumberOfNodes = self.graph.number_of_nodes()
@@ -73,7 +97,7 @@ class TVG(object):
         return parameters    
 
 
-    def make_graphic(self, GraphName):
+    def make_network_graph(self, GraphName):
         """Make graph of network"""
         import matplotlib.pyplot as plt
         import os
@@ -92,24 +116,57 @@ class TVG(object):
         plt.close('all')
 
 
+    def make_parametr_plot(self, xi, param, fileName, log=0):
+        import matplotlib.pyplot as plt
+        import os
+
+        if log:
+            plt.yscale('log')
+            plt.xscale('log')
+        plt.plot(xi, param, 'ro')
+
+        try:
+            os.makedirs('Graphics/params')
+        except OSError:
+            pass
+
+        fname = "Graphics/params/" + fileName + ".png"
+        plt.savefig(fname)
+        plt.close('all')
+        return 1
+
+
     def make_research_static_probability(self):
         import numpy
         params = []
-        self.generate_poisson_random_data(10, 1000)
+        # self.generate_poisson_random_data(10, 1000)
         # self.generate_simple321_random_data(100)
-        for probability in numpy.arange(0., 1., 0.1):
+        xiRange = numpy.arange(0., 1., 0.1)
+        for probability in xiRange:
             self.make_network_with_static_probability(probability)
             params.append(self.calculate_graph_parametrs())
-            # self.make_graphic(str(probability))
+            # self.make_network_graph(str(probability))
+
+        self.make_parametr_plot(xiRange, [d['clustering'] for d in params], "clustering")
+        self.make_parametr_plot(xiRange, [d['shortpath'] for d in params], "shortpath")
+        self.make_parametr_plot(xiRange, [d['assorativity'] for d in params], "assorativity")
+        self.make_parametr_plot(xiRange, [d['edges'] for d in params], "edges")
+        self.make_parametr_plot(xiRange, [d['average_degree'] for d in params], "average_degree")
+        self.make_parametr_plot(xiRange, [d['diametr'] for d in params], "diametr")
+        self.make_parametr_plot(xiRange, [d['nodes'] for d in params], "nodes")
+
         return params
 
 Test = TVG()
+Test.import_amosov_data('input.xls')
+Test.make_network_with_static_probability(0.0)
+
 print Test.make_research_static_probability()
 
-# Test.generate_random_data(10)
+# Test.generate_simple321_random_data(10)
 # Test.generate_poisson_random_data(10, 100)
 # print Test.RRIntervals
-# Test.make_network_with_static_probability(0.1)
-# Test.make_graphic()
+# Test.make_network_with_static_probability(1)
+# Test.make_graphic("123")
 # print Test.calculate_graph_parametrs()
 # print Test.calculate_average_degree()
