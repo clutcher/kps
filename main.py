@@ -146,14 +146,19 @@ class TVG(object):
             self.make_network_with_static_probability(probability)
             params.append(self.calculate_graph_parametrs())
             # self.make_network_graph(str(probability))
-
-        self.make_parametr_plot(xiRange, [d['clustering'] for d in params], "clustering")
-        self.make_parametr_plot(xiRange, [d['shortpath'] for d in params], "shortpath")
-        self.make_parametr_plot(xiRange, [d['assorativity'] for d in params], "assorativity")
-        self.make_parametr_plot(xiRange, [d['edges'] for d in params], "edges")
-        self.make_parametr_plot(xiRange, [d['average_degree'] for d in params], "average_degree")
-        self.make_parametr_plot(xiRange, [d['diametr'] for d in params], "diametr")
-        self.make_parametr_plot(xiRange, [d['nodes'] for d in params], "nodes")
+        try:
+            self.make_parametr_plot(xiRange, [d['clustering'] for d in params], "clustering")
+            self.make_parametr_plot(xiRange, [d['shortpath'] for d in params], "shortpath")
+            self.make_parametr_plot(xiRange, [d['assorativity'] for d in params], "assorativity")
+            self.make_parametr_plot(xiRange, [d['edges'] for d in params], "edges")
+            self.make_parametr_plot(xiRange, [d['average_degree'] for d in params], "average_degree")
+            self.make_parametr_plot(xiRange, [d['diametr'] for d in params], "diametr")
+            self.make_parametr_plot(xiRange, [d['nodes'] for d in params], "nodes")
+        except:
+            print "Plot error. Maybe server without display!"
+            print params
+            f = open("data-fallback.txt", 'w')
+            f.write(str(params)
 
         return params
 
