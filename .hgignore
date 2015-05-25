@@ -1,2 +1,7 @@
+syntax: glob
+
+.idea
 /amosov/
 /Graphics/
+/results/
+*.pyc
